@@ -87,12 +87,11 @@
 </template>
 
 <script>
-  import { axiosClient } from '../clients/axiosClient'
+  import { UserService } from '@/services/UserService.js'
+  import { CPF_REGEX } from '@/enum/CpfRegeEnum.js'
+  import { format, addDays } from 'date-fns'
 
-  const CPF_REGEX = {
-    default: /[0-9]{3}\.[0-9]{3}\.[0-9]{3}\-[0-9]{2}/,
-    withoutChars: /(\d{3})(\d{3})(\d{3})(\d{2})/
-  }
+  const userService = new UserService();
 
   export default {
     data: () => ({
@@ -132,7 +131,24 @@
     filterResults() {
       if (!this.valid) return
 
-      axiosClient.get('/users')
+      userService.getFilteredUsers({
+        name: this.name.trim(),
+        cpf: this.cpf.trim(),
+        initial_date: this.dateToTimestamp(this.initialDate),
+        finished_date: this.dateToTimestamp(this.finishDate, true)
+      })
+      .then(response => {
+        this.$emit('update-results', response.data)
+      })
+    },
+
+    dateToTimestamp(currentDate, isFinishDate = false) {
+      let mask = 'yyyy-MM-dd '
+      mask += isFinishDate ? '23:59:59' : '00:00:01'
+
+      const response = format(addDays(new Date(currentDate), 1), mask, { timezone: 'America/Sao_Paulo' });
+
+      return response
     }
    },
   }
