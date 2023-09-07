@@ -21,6 +21,14 @@
         { value: -1, title: 'Todos' },
       ]"
     >
+      <template #item.created_at="{item}">
+        {{ formatDate(item.raw.created_at) }}
+      </template>
+
+      <template #item.is_admin="{item}">
+        {{ item.raw.is_admin == 1 ? 'ADM' : 'USER' }}
+      </template>
+
       <template #item.action="{item}">
         <v-row justify="space-around">
            <v-col cols="2">
@@ -43,30 +51,27 @@
                 icon="mdi-delete"
                 @click="showDeleteModal(item.raw)"
               ></v-btn>
+              <DeleteModal />
           </v-col>
         </v-row>
       </template>
-
-      <template #item.is_admin="{item}">
-        {{ item.raw.is_admin == 1 ? 'ADM' : 'USER' }}
-      </template>
     </v-data-table>
 
-    <DeletedUser />
   </section>
 </template>
 
 <script>
   import FilterComponent from './FilterComponent.vue'
-  import DeletedUser from './modal/DeleteModal.vue'
+  import DeleteModal from './modal/DeleteModal.vue'
 
   import { VDataTable } from 'vuetify/labs/VDataTable'
+  import { format } from 'date-fns'
 
   export default {
     components: {
       FilterComponent,
       VDataTable,
-      DeletedUser
+      DeleteModal
     },
      data () {
       return {
@@ -91,10 +96,14 @@
 
     methods: {
       setFilteredUsers(users) {
-        if (users && users.length)
-        this.desserts = users
+        if (users && users.length) {
+          this.desserts = users
+        }
       },
-
+      formatDate(date) {
+        console.log(date)
+        return format(new Date(date), 'dd/MM/yyyy')
+      },
       showDeleteModal(currentUserData) {
         this.$eventBus.emit('delete-modal', currentUserData)
       }
