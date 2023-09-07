@@ -1,7 +1,10 @@
 <template>
-  <HelloWorld />
+  <h1>Sesab APP</h1> <!-- Criar um Header -->
+  <v-container>
+    <HomeComponent />
+  </v-container>
 </template>
 
 <script setup>
-  import HelloWorld from '@/components/HelloWorld.vue'
+  import HomeComponent from '@/components/HomeComponent.vue'
 </script>
