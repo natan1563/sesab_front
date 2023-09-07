@@ -1,148 +1,84 @@
 <template>
-  <v-form v-model="valid" @submit.prevent="filterResults" class="mt-5">
-    <v-container>
-      <v-row>
-        <v-col
-          cols="12"
-          md="6"
-        >
-          <v-text-field
-            v-model="name"
-            :rules="nameRules"
-            label="Nome"
-            required
-          ></v-text-field>
-        </v-col>
+  <FilterComponent />
 
-        <v-col
-          cols="12"
-          md="6"
-        >
-          <v-text-field
-            v-model="cpf"
-            :rules="cpfRules"
-            :counter="14"
-            :maxlength="14"
-            label="CPF"
-            required
-            @input="formatCPF"
-          ></v-text-field>
-        </v-col>
+  <section class="pt-5">
+    <v-divider class="my-5"/>
+    <v-data-table
+      v-model:items-per-page="itemsPerPage"
+      :headers="headers"
+      :items="desserts"
+      item-value="name"
+      class="elevation-1 mt-5"
+    >
+      <template #item.action="{item}">
+        <v-row justify="space-around">
+           <v-col cols="2">
+              <v-btn
+                density="comfortable"
+                icon="mdi-information"
+              ></v-btn>
+            </v-col>
 
-        <v-col
-          cols="12"
-          md="6"
-        >
-          <v-text-field
-            v-model="initialDate"
-            :rules="initialDateRule"
-            label="Data Inicial"
-            type="date"
-            required
-          ></v-text-field>
-        </v-col>
+           <v-col cols="2">
+              <v-btn
+                density="comfortable"
+                icon="mdi-pencil"
+              ></v-btn>
+            </v-col>
 
-        <v-col
-          cols="12"
-          md="6"
-        >
-          <v-text-field
-            v-model="finishDate"
-            :rules="finishDateRule"
-            label="Data final"
-            type="date"
-            required
-          ></v-text-field>
-        </v-col>
-
-        <v-row justify="center">
-          <v-col
-            cols="12"
-            md="4"
-          >
-            <v-btn
-              color="success"
-              class="mt-4"
-              block
-              type="submit"
-            >
-              Filtrar
-            </v-btn>
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="4"
-          >
-            <v-btn
-              color="info"
-              class="mt-4"
-              block
-            >
-              Novo
-            </v-btn>
+           <v-col cols="2">
+              <v-btn
+                density="comfortable"
+                icon="mdi-delete"
+              ></v-btn>
           </v-col>
         </v-row>
-      </v-row>
-    </v-container>
-  </v-form>
+      </template>
+
+      <template #item.is_admin="{item}">
+        {{ item.raw.is_admin == 1 ? 'ADM' : 'USER' }}
+      </template>
+    </v-data-table>
+  </section>
 </template>
 
 <script>
-  import VueTheMask from 'vue-the-mask'
-  import { axiosClient } from '../clients/axiosClient'
-
-  const CPF_REGEX = {
-    default: /[0-9]{3}\.[0-9]{3}\.[0-9]{3}\-[0-9]{2}/,
-    withoutChars: /(\d{3})(\d{3})(\d{3})(\d{2})/
-  }
+  import FilterComponent from './FilterComponent.vue'
+  import { VDataTable } from 'vuetify/labs/VDataTable'
 
   export default {
     components: {
-      VueTheMask,
+      FilterComponent,
+      VDataTable
     },
-    data: () => ({
-      valid: false,
-      name: '',
-      cpf: '',
-      initialDate: '',
-      finishDate: '',
-      nameRules: [
-        value => !!value || 'Por favor preencha o campo nome'
-      ],
-      cpfRules: [
-        value => !!value || 'Por favor preencha o CPF',
-        cpf => CPF_REGEX.default.test(cpf) || 'CPF inválido'
-      ],
-      initialDateRule: [
-        value => !!value ||'Por favor preencha a data de início'
-      ],
-
-      finishDateRule: [
-        value =>!!value || 'Por favor preencha a data final'
-      ],
-    }),
-
-
-   methods: {
-    formatCPF() {
-      this.cpf = this.cpf.replace(/\D/g, '');
-
-      if (this.cpf.length === 11) {
-        this.cpf = this.cpf.replace(
-          CPF_REGEX.withoutChars,
-          '$1.$2.$3-$4'
-        );
+     data () {
+      return {
+        itemsPerPage: 5,
+        headers: [
+          {
+            title: 'ID',
+            align: 'start',
+            sortable: false,
+            key: 'id',
+          },
+          { title: 'Data cadastro', sortable: false, align: 'center', key: 'created_at' },
+          { title: 'Nome', sortable: false, align: 'center', key: 'name' },
+          { title: 'CPF', sortable: false, align: 'center', key: 'cpf' },
+          { title: 'E-mail', sortable: false, align: 'center', key: 'email' },
+          { title: 'Perfil', sortable: false, align: 'center', key: 'is_admin' },
+          { title: 'Ação', sortable: false, align: 'center', key: 'action' },
+        ],
+        desserts: [
+          {
+            id: 1,
+            name: "Natã Romão",
+            cpf: "03275325533",
+            email: "madarap901@gmail.com",
+            is_admin: 1,
+            created_at: "2023-09-07 00:32:45",
+          },
+        ],
       }
     },
-    filterResults() {
-      console.log('teste 0')
-
-      if (!this.valid) return
-
-      console.log('teste')
-      axiosClient.get('/users')
-    }
-   },
   }
 </script>
