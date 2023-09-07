@@ -1,6 +1,5 @@
 <template>
   <v-form v-model="valid" @submit.prevent="filterResults" class="mt-5">
-    <v-container>
       <v-row>
         <v-col
           cols="12"
@@ -58,7 +57,7 @@
         <v-row justify="center">
           <v-col
             cols="12"
-            md="4"
+            md="2"
           >
             <v-btn
               color="success"
@@ -72,7 +71,7 @@
 
           <v-col
             cols="12"
-            md="4"
+            md="2"
           >
             <v-btn
               color="info"
@@ -84,7 +83,6 @@
           </v-col>
         </v-row>
       </v-row>
-    </v-container>
   </v-form>
 </template>
 
