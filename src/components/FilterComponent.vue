@@ -125,6 +125,11 @@
       FormModal,
     },
 
+    mounted () {
+      this.$eventBus.on('refresh-search', () => {
+        this.filterResults()
+      });
+    },
     methods: {
       formatCPF() {
         this.cpf = this.cpf.replace(/\D/g, '');

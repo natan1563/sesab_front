@@ -30,6 +30,9 @@
 </template>
 
 <script>
+import { UserService } from '@/services/UserService'
+  const userServiceInstance = new UserService()
+
   export default {
     data() {
       return {
@@ -46,7 +49,11 @@
 
     methods: {
       deleteUser(id) {
-        console.log('User deleted' + id)
+        userServiceInstance.deleteUser(id)
+        .then(() => {
+          this.$eventBus.emit('refresh-search')
+          this.deleteDialog = false
+        })
       },
     },
   }
