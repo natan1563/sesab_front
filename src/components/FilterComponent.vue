@@ -77,9 +77,12 @@
               color="info"
               class="mt-4"
               block
+              @click="openFormModal"
             >
               Novo
             </v-btn>
+
+            <FormModal />
           </v-col>
         </v-row>
       </v-row>
@@ -87,8 +90,10 @@
 </template>
 
 <script>
+  import FormModal from './modal/FormModal.vue'
+
   import { UserService } from '@/services/UserService.js'
-  import { CPF_REGEX } from '@/enum/CpfRegeEnum.js'
+  import { CPF_REGEX } from '@/enum/CpfRegexEnum.js'
   import { format, addDays } from 'date-fns'
 
   const userService = new UserService();
@@ -116,40 +121,47 @@
       ],
     }),
 
+    components: {
+      FormModal,
+    },
 
-   methods: {
-    formatCPF() {
-      this.cpf = this.cpf.replace(/\D/g, '');
+    methods: {
+      formatCPF() {
+        this.cpf = this.cpf.replace(/\D/g, '');
 
-      if (this.cpf.length === 11) {
-        this.cpf = this.cpf.replace(
-          CPF_REGEX.withoutChars,
-          '$1.$2.$3-$4'
-        );
+        if (this.cpf.length === 11) {
+          this.cpf = this.cpf.replace(
+            CPF_REGEX.withoutChars,
+            '$1.$2.$3-$4'
+          );
+        }
+      },
+      filterResults() {
+        if (!this.valid) return
+
+        userService.getFilteredUsers({
+          name: this.name.trim(),
+          cpf: this.cpf.trim(),
+          initial_date: this.dateToTimestamp(this.initialDate),
+          finished_date: this.dateToTimestamp(this.finishDate, true)
+        })
+        .then(response => {
+          this.$emit('update-results', response.data)
+        })
+      },
+
+      dateToTimestamp(currentDate, isFinishDate = false) {
+        let mask = 'yyyy-MM-dd '
+        mask += isFinishDate ? '23:59:59' : '00:00:01'
+
+        const response = format(addDays(new Date(currentDate), 1), mask, { timezone: 'America/Sao_Paulo' });
+
+        return response
+      },
+
+      openFormModal() {
+        this.$eventBus.emit('form-modal')
       }
     },
-    filterResults() {
-      if (!this.valid) return
-
-      userService.getFilteredUsers({
-        name: this.name.trim(),
-        cpf: this.cpf.trim(),
-        initial_date: this.dateToTimestamp(this.initialDate),
-        finished_date: this.dateToTimestamp(this.finishDate, true)
-      })
-      .then(response => {
-        this.$emit('update-results', response.data)
-      })
-    },
-
-    dateToTimestamp(currentDate, isFinishDate = false) {
-      let mask = 'yyyy-MM-dd '
-      mask += isFinishDate ? '23:59:59' : '00:00:01'
-
-      const response = format(addDays(new Date(currentDate), 1), mask, { timezone: 'America/Sao_Paulo' });
-
-      return response
-    }
-   },
   }
 </script>
