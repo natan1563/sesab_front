@@ -8,7 +8,7 @@
       persistent
     >
       <v-container>
-        <v-form v-model="valid" @submit.prevent>
+        <v-form v-model="valid" @submit.prevent="sendUser">
           <v-card>
             <v-card-title class="pa-5">
               <span class="text-h5">{{ isUpdate ? 'Atualizar' : 'Cadastrar'}} Usuário</span>
@@ -144,10 +144,12 @@
 <script>
   import { VDataTableVirtual } from 'vuetify/labs/VDataTable'
   import { CepService } from '@/services/CepService.js'
+  import { UserService } from '@/services/UserService.js'
   import { CPF_REGEX } from '@/enum/CpfRegexEnum.js'
   import { CEP_REGEX } from '@/enum/CepRegexEnum.js'
 
   const cepServiceInstance = new CepService()
+  const userServiceInstance = new UserService()
 
   export default {
     components: {
@@ -165,7 +167,6 @@
         cep: '',
         formDialog: false,
         isUpdate: false,
-        currentUser: null,
         headers: [
         {
           title: 'Logradouro',
@@ -201,7 +202,8 @@
         this.formDialog = true
 
         if (userData) {
-          this.currentUser = userData
+          this.formData = userData
+          this.formData.is_admin = !!userData.is_admin
           this.isUpdate = true
         }
 
@@ -209,10 +211,26 @@
     },
 
     methods: {
+      sendUser() {
+        if (!this.valid) return
+
+        userServiceInstance
+          .createUser(this.formData)
+          .then(response => {
+            console.log('usuário criado', response.data)
+
+            // lógica para cadastrar os endereços
+            this.formDialog = false
+          })
+          .catch(error => {
+            console.error(error)
+          })
+      },
+
       closeModal() {
         this.formDialog = false
         this.isUpdate = false
-        this.currentUser = null
+        this.formData = null
       },
 
       addAddress() {

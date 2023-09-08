@@ -42,6 +42,7 @@
               <v-btn
                 density="comfortable"
                 icon="mdi-pencil"
+                @click="showUpdateModal(item.raw)"
               ></v-btn>
             </v-col>
 
@@ -106,6 +107,9 @@
       },
       showDeleteModal(currentUserData) {
         this.$eventBus.emit('delete-modal', currentUserData)
+      },
+      showUpdateModal(currentUserData) {
+        this.$eventBus.emit('form-modal', currentUserData)
       }
     },
   }
