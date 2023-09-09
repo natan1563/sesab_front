@@ -7,7 +7,7 @@
       width="1024"
       persistent
     >
-      <v-container>
+      <v-container v-if="formDialog">
         <v-form v-model="valid" @submit.prevent="sendUser">
           <v-card>
             <v-card-title class="pa-5">
@@ -101,7 +101,7 @@
                   <v-container >
                     <v-data-table-virtual
                       :headers="headers"
-                      :items="desserts"
+                      :items="addresses"
                       class="elevation-1"
                       height="200"
                       item-value="name"
@@ -145,11 +145,13 @@
   import { VDataTableVirtual } from 'vuetify/labs/VDataTable'
   import { CepService } from '@/services/CepService.js'
   import { UserService } from '@/services/UserService.js'
+  import { AddressService } from '@/services/AddressService.js'
   import { CPF_REGEX } from '@/enum/CpfRegexEnum.js'
   import { CEP_REGEX } from '@/enum/CepRegexEnum.js'
 
   const cepServiceInstance = new CepService()
   const userServiceInstance = new UserService()
+  const addressServiceInstance = new AddressService()
 
   export default {
     components: {
@@ -180,7 +182,7 @@
         { title: 'UF', align: 'end', key: 'uf' },
         { title: 'Ação', align: 'end', key: 'acao' },
         ],
-        desserts: [],
+        addresses: [],
         rules: {
           nameRules: [
             value => !!value || 'Por favor preencha o campo nome'
@@ -191,7 +193,7 @@
           ],
           emailRules: [
             value => !!value || 'Por favor preencha o seu e-mail',
-            email => /^[a-z.-]+@[a-z.-]+\.[a-z]+$/i.test(email) || 'Por favor preencha um e-mail válido'
+            email => /^[a-z0-9.-]+@[a-z.-]+\.[a-z]+$/i.test(email) || 'Por favor preencha um e-mail válido'
           ]
         }
       }
@@ -216,10 +218,15 @@
 
         userServiceInstance
           .createUser(this.formData)
-          .then(response => {
-            console.log('usuário criado', response.data)
+          .then((response) => {
+            if (response.status !== 201) {
+              throw new Error(response.data.Error)
+            }
 
-            // lógica para cadastrar os endereços
+            this.addresses.forEach(async (address) => {
+              await addressServiceInstance.createAddress(this.buildAddressPayload(address, response.data.id))
+            })
+
             this.formDialog = false
           })
           .catch(error => {
@@ -239,14 +246,14 @@
         cepServiceInstance
           .getCepData(this.removeChars(this.cep))
           .then(response => {
-            this.desserts.push(response.data)
+            this.addresses.push(response.data)
             this.cep = ''
           })
       },
 
       removeAddress(cep) {
-        const addressPosition = this.desserts.findIndex(item => item.cep === cep)
-        this.desserts.splice(addressPosition, 1)
+        const addressPosition = this.addresses.findIndex(item => item.cep === cep)
+        this.addresses.splice(addressPosition, 1)
       },
 
       formatCPF() {
@@ -273,6 +280,17 @@
 
       removeChars(input) {
         return input.replace(/\D/g, '')
+      },
+
+      buildAddressPayload(addressRawData, user_id) {
+        return {
+          cep: this.removeChars(addressRawData.cep),
+          public_place: addressRawData.logradouro,
+          neighborhood: addressRawData.bairro,
+          locality: addressRawData.localidade,
+          uf: addressRawData.uf,
+          user_id
+        };
       }
     },
   }
