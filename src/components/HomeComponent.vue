@@ -57,22 +57,26 @@
         </v-row>
       </template>
     </v-data-table>
-
   </section>
+
+  <ErrorSnackbar />
 </template>
 
 <script>
   import FilterComponent from './FilterComponent.vue'
   import DeleteModal from './modal/DeleteModal.vue'
+  import ErrorSnackbar from './helpers/ErrorSnackbar.vue'
 
   import { VDataTable } from 'vuetify/labs/VDataTable'
   import { format } from 'date-fns'
+
 
   export default {
     components: {
       FilterComponent,
       VDataTable,
-      DeleteModal
+      DeleteModal,
+      ErrorSnackbar
     },
      data () {
       return {
@@ -97,12 +101,12 @@
 
     methods: {
       setFilteredUsers(users) {
+        this.desserts = []
         if (users && users.length) {
           this.desserts = users
         }
       },
       formatDate(date) {
-        console.log(date)
         return format(new Date(date), 'dd/MM/yyyy')
       },
       showDeleteModal(currentUserData) {
