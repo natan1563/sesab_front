@@ -52,7 +52,6 @@
                       :maxlength="14"
                       required
                       persistent-hint
-                      @input="formatCPF"
                     ></v-text-field>
                   </v-col>
 
@@ -183,6 +182,7 @@
         { title: 'Ação', align: 'end', key: 'acao' },
         ],
         addresses: [],
+        addressToRemove: [],
         rules: {
           nameRules: [
             value => !!value || 'Por favor preencha o campo nome'
@@ -203,20 +203,36 @@
       this.$eventBus.on('form-modal', (userData) => {
         this.formDialog = true
 
-        if (userData) {
+        if (typeof userData === 'object') {
           this.formData = userData
           this.formData.is_admin = !!userData.is_admin
+          this.addresses = userData.addresses.map(address => {
+            return {
+              id: address.id,
+              cep: address.cep,
+              logradouro: address.public_place,
+              bairro: address.neighborhood,
+              localidade: address.locality,
+              uf: address.uf,
+            }
+          })
           this.isUpdate = true
         }
 
       })
     },
 
+    watch: {
+      'formData.cpf'() {
+        this.formatCPF()
+      }
+    },
     methods: {
       sendUser() {
         if (!this.valid) return
 
-        userServiceInstance
+        if (!this.isUpdate) {
+          userServiceInstance
           .createUser(this.formData)
           .then((response) => {
             if (response.status !== 201) {
@@ -230,14 +246,51 @@
             this.formDialog = false
           })
           .catch(error => {
-            console.error(error)
+            const errorMessage = error?.response?.data?.Error ?? error.message
+            this.$eventBus.emit('active-snackbar', errorMessage)
           })
+        } else {
+          userServiceInstance
+          .updateUser(this.formData)
+          .then(response => {
+            if (response.status !== 200) {
+              throw new Error(response.data.Error)
+            }
+
+            // remove os endereços solicitados
+            this.addressToRemove.forEach(async (address) => {
+              await addressServiceInstance.deleteAddress(address.id)
+            })
+
+            // Adiciona os novos endereços
+            this.addresses.forEach(async (address) => {
+              if (!address?.id) {
+                await addressServiceInstance.createAddress(this.buildAddressPayload(address, this.formData.id))
+              }
+            })
+
+            this.$eventBus.emit('refresh-search', true)
+            this.formDialog = false
+          })
+          .catch(error => {
+            const errorMessage = error?.response?.data?.Error ?? error.message
+            this.$eventBus.emit('active-snackbar', errorMessage)
+          })
+        }
       },
 
       closeModal() {
         this.formDialog = false
         this.isUpdate = false
         this.formData = null
+        this.address = []
+        this.addressToRemove = []
+        this.formData =  {
+          name: '',
+          email: '',
+          cpf: '',
+          is_admin: false,
+        }
       },
 
       addAddress() {
@@ -253,6 +306,11 @@
 
       removeAddress(cep) {
         const addressPosition = this.addresses.findIndex(item => item.cep === cep)
+
+        if (this.isUpdate && !!this.addresses[addressPosition]?.id) {
+          this.addressToRemove.push(this.addresses[addressPosition])
+        }
+
         this.addresses.splice(addressPosition, 1)
       },
 
