@@ -126,8 +126,8 @@
     },
 
     mounted () {
-      this.$eventBus.on('refresh-search', () => {
-        this.filterResults()
+      this.$eventBus.on('refresh-search', (noCache = false) => {
+        this.filterResults(noCache)
       });
     },
     methods: {
@@ -141,7 +141,7 @@
           );
         }
       },
-      filterResults() {
+      filterResults(noCache = false) {
         if (!this.valid) return
 
         userService.getFilteredUsers({
@@ -149,7 +149,9 @@
           cpf: this.cpf.trim(),
           initial_date: this.dateToTimestamp(this.initialDate),
           finished_date: this.dateToTimestamp(this.finishDate, true)
-        })
+        },
+          noCache
+        )
         .then(response => {
           this.$emit('update-results', response.data)
         })
